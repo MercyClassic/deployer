@@ -1,0 +1,11 @@
+.env
+.idea
+__pycache__/
+logs
+dev
+.pytest_cache
+.mypy_cache
+.ruff_cache
+venv
+.venv
+src/deployer/database/deployer.db
