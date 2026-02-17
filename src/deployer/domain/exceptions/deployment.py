@@ -11,3 +11,7 @@ class DeploymentNotFound(DomainError):
 
 class DeployFailed(DomainError):
     pass
+
+
+class DeployAlreadyRunning(DomainError):
+    pass

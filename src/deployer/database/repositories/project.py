@@ -2,7 +2,7 @@ from collections.abc import Iterable
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 from deployer.domain.entities.project import (
     DeployStrategy,
@@ -33,7 +33,11 @@ class ProjectRepository:
         return await self._session.scalar(
             select(Project)
             .where(Project.id == project_id)
-            .options(selectinload(Project.configs), selectinload(Project.servers)),
+            .options(
+                joinedload(Project.configs),
+                joinedload(Project.servers),
+                joinedload(Project.deployments),
+            ),
         )
 
     async def get_by_user_id(self, user_id: int) -> Iterable[Project]:
@@ -62,7 +66,10 @@ class ProjectRepository:
         return config
 
     async def get_config_by_version(
-        self, project_id: int, version: int, strategy: DeployStrategy,
+        self,
+        project_id: int,
+        version: int,
+        strategy: DeployStrategy,
     ) -> ProjectConfig | None:
         return await self._session.scalar(
             select(ProjectConfig).where(
@@ -73,7 +80,10 @@ class ProjectRepository:
         )
 
     async def delete_configs_after_version(
-        self, project_id: int, version: int, strategy: DeployStrategy,
+        self,
+        project_id: int,
+        version: int,
+        strategy: DeployStrategy,
     ) -> None:
         await self._session.execute(
             delete(ProjectConfig).where(

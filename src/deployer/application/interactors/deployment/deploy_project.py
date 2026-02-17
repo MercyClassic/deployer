@@ -33,6 +33,7 @@ class DeployProjectInteractor:
             raise ProjectNotFound
         if project.user_id != user.id:
             raise AccessDenied
+        project.check_deploy_possible()
 
         deployer_mapper = {
             DeployStrategy.shell: ShellDeployer,

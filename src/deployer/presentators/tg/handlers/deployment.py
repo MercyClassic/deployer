@@ -13,6 +13,7 @@ from deployer.application.interactors.deployment.get_deploy_history import (
 from deployer.application.interactors.deployment.get_deployment import (
     GetDeploymentInteractor,
 )
+from deployer.domain.exceptions.deployment import DeployAlreadyRunning
 from deployer.domain.exceptions.project import ActiveConfigNotFound
 from deployer.presentators.tg.states.deployment import DeploymentStates
 
@@ -78,6 +79,9 @@ async def on_start_deploy(
         deployment = await deploy_project_interactor.execute(project_id)
     except ActiveConfigNotFound:
         await callback.answer('❌ Не найдена конфигурация проекта')
+        return
+    except DeployAlreadyRunning:
+        await callback.answer('❌ В настоящее время уже запущен деплой')
         return
 
     await callback.answer(f'🚀 Деплой #{deployment.id} запущен')

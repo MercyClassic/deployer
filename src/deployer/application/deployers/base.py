@@ -96,17 +96,17 @@ class DeployerStrategy(ABC):
         servers: list[Server],
     ) -> None:
         deployment = await self._deployment_repo.get(deployment_id)
-        deployment.status = DeploymentStatus.running
+        deployment.set_status(DeploymentStatus.running)
         await self._transaction_manager.commit()
         try:
             await self._deploy(config, servers)
         except (DeployFailed, SSHException) as exc:
             logger.error('Deploy #%s failed. Reason: %s', deployment.id, str(exc))
-            deployment.status = DeploymentStatus.failed
+            deployment.set_status(DeploymentStatus.failed)
         else:
-            deployment.status = DeploymentStatus.success
+            deployment.set_status(DeploymentStatus.success)
 
-        deployment.finished_at = datetime.datetime.now(datetime.UTC)
-        deployment.std = '\n'.join(self.logs)
+        deployment.set_finished_at()
+        deployment.set_std('\n'.join(self.logs))
 
         await self._transaction_manager.commit()

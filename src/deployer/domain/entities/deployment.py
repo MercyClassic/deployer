@@ -41,3 +41,6 @@ class Deployment:
 
     def set_status(self, status: DeploymentStatus) -> None:
         self.status = status
+
+    def set_finished_at(self) -> None:
+        self.finished_at = datetime.datetime.now(datetime.UTC)

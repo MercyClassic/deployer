@@ -9,6 +9,7 @@ from deployer.domain.entities.project_configs import (
     CONFIG_TYPE_BY_STRATEGY,
     PROJECT_CONFIG_TYPE,
 )
+from deployer.domain.exceptions.deployment import DeployAlreadyRunning
 from deployer.domain.exceptions.project import (
     ActiveConfigNotFound,
     InvalidConfigFormat,
@@ -16,7 +17,7 @@ from deployer.domain.exceptions.project import (
 )
 
 if TYPE_CHECKING:
-    from deployer.domain.entities.deployment import Deployment
+    from deployer.domain.entities.deployment import Deployment, DeploymentStatus
     from deployer.domain.entities.user import User
 
 
@@ -63,6 +64,18 @@ class Project:
             )
         except StopIteration:
             raise ActiveConfigNotFound
+
+    def check_deploy_possible(self) -> bool:
+        active_deploy = next(
+            filter(
+                lambda x: x.status == DeploymentStatus.running,
+                self.deployments,
+            ),
+            None,
+        )
+        if active_deploy:
+            raise DeployAlreadyRunning
+        return True
 
     def set_deploy_strategy(self, strategy: str) -> None:
         try:
