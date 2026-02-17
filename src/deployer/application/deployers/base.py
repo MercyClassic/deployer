@@ -1,6 +1,4 @@
-import datetime
 import logging
-import select
 from abc import ABC, abstractmethod
 
 import paramiko
@@ -102,6 +100,7 @@ class DeployerStrategy(ABC):
             await self._deploy(config, servers)
         except (DeployFailed, SSHException) as exc:
             logger.error('Deploy #%s failed. Reason: %s', deployment.id, str(exc))
+            self.logs.append(str(exc))
             deployment.set_status(DeploymentStatus.failed)
         else:
             deployment.set_status(DeploymentStatus.success)

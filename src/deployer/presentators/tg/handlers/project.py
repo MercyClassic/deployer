@@ -339,11 +339,12 @@ async def on_delete_server(
     manager: DialogManager,
     delete_server_interactor: FromDishka[DeleteServerInteractor],
 ) -> None:
-    server_id = manager.dialog_data.get('server_id')
-    if server_id:
-        await delete_server_interactor.execute(server_id)
-        await callback.answer('Сервер удален')
-        await manager.switch_to(ProjectStates.servers_list)
+    project_id = manager.dialog_data['project_id']
+    server_id = manager.dialog_data['server_id']
+
+    await delete_server_interactor.execute(project_id, server_id)
+    await callback.answer('Сервер удален')
+    await manager.switch_to(ProjectStates.servers_list)
 
 
 async def on_server_name_entered(

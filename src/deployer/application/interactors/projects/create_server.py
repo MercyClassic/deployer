@@ -3,7 +3,6 @@ from deployer.database.repositories.project import ProjectRepository
 from deployer.database.transaction import TransactionManagerInterface
 from deployer.domain.entities.project import Server
 from deployer.domain.exceptions.project import ProjectNotFound
-from deployer.domain.exceptions.user import AccessDenied
 
 
 class CreateServerInteractor:
@@ -28,14 +27,11 @@ class CreateServerInteractor:
         workdir: str,
     ) -> Server:
         user = await self._identity_provider.get_user()
-        project = await self._project_repo.get(project_id)
+        project = await self._project_repo.get_with_all_data(project_id)
         if not project:
             raise ProjectNotFound
-        if project.user_id != user.id:
-            raise AccessDenied
-
-        server = Server.create(
-            project_id=project_id,
+        project.check_user_permitted(user.id)
+        server = project.create_server(
             name=name,
             host=host,
             port=port,
@@ -43,6 +39,5 @@ class CreateServerInteractor:
             ssh_secret=ssh_secret,
             workdir=workdir,
         )
-        server = await self._project_repo.create_server(server)
         await self._transaction_manager.commit()
         return server

@@ -1,7 +1,6 @@
 from deployer.database.identity_provider import IdentityProviderInterface
 from deployer.database.repositories.project import ProjectRepository
 from deployer.database.transaction import TransactionManagerInterface
-from deployer.domain.exceptions.user import AccessDenied
 
 
 class DeleteProjectInteractor:
@@ -17,8 +16,7 @@ class DeleteProjectInteractor:
 
     async def execute(self, project_id: int) -> None:
         user = await self._identity_provider.get_user()
-        project = await self._project_repo.get(project_id)
-        if project.user_id != user.id:
-            raise AccessDenied
+        project = await self._project_repo.get_with_all_data(project_id)
+        project.check_user_permitted(user.id)
         await self._project_repo.delete(project)
         await self._transaction_manager.commit()

@@ -22,6 +22,6 @@ class CreateProjectInteractor:
             name=name,
             deploy_strategy=deploy_strategy,
         )
-        await self._project_repo.create(project)
+        await self._project_repo.add(project)
         await self._transaction_manager.commit()
         return project

@@ -10,7 +10,6 @@ from deployer.domain.entities.deployment import Deployment, DeploymentStatus
 from deployer.domain.entities.project import DeployStrategy
 from deployer.domain.exceptions.deployment import UnsupportedStrategy
 from deployer.domain.exceptions.project import ProjectNotFound
-from deployer.domain.exceptions.user import AccessDenied
 
 
 class DeployProjectInteractor:
@@ -31,8 +30,8 @@ class DeployProjectInteractor:
         project = await self._project_repo.get_with_all_data(project_id)
         if not project:
             raise ProjectNotFound
-        if project.user_id != user.id:
-            raise AccessDenied
+
+        project.check_user_permitted(user.id)
         project.check_deploy_possible()
 
         deployer_mapper = {
@@ -49,7 +48,7 @@ class DeployProjectInteractor:
             project_id=project_id,
             status=DeploymentStatus.pending,
         )
-        await self._deployment_repo.create(deployment)
+        await self._deployment_repo.add(deployment)
         await self._transaction_manager.flush()
 
         execute_deploy(

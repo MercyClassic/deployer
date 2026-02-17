@@ -3,7 +3,6 @@ from deployer.database.repositories.project import ProjectRepository
 from deployer.database.transaction import TransactionManagerInterface
 from deployer.domain.entities.project import ProjectConfig
 from deployer.domain.exceptions.project import ProjectNotFound
-from deployer.domain.exceptions.user import AccessDenied
 
 
 class ShowProjectConfigInteractor:
@@ -22,6 +21,6 @@ class ShowProjectConfigInteractor:
         project = await self._project_repo.get_with_all_data(project_id)
         if not project:
             raise ProjectNotFound
-        if project.user_id != user.id:
-            raise AccessDenied
+        project.check_user_permitted(user.id)
+
         return project.active_config

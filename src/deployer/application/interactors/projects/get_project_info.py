@@ -2,7 +2,6 @@ from deployer.database.identity_provider import IdentityProviderInterface
 from deployer.database.repositories.project import ProjectRepository
 from deployer.domain.entities.project import Project
 from deployer.domain.exceptions.project import ProjectNotFound
-from deployer.domain.exceptions.user import AccessDenied
 
 
 class GetProjectInfoInteractor:
@@ -19,6 +18,5 @@ class GetProjectInfoInteractor:
         project = await self._project_repo.get_with_all_data(project_id)
         if not project:
             raise ProjectNotFound
-        if project.user_id != user.id:
-            raise AccessDenied
+        project.check_user_permitted(user.id)
         return project

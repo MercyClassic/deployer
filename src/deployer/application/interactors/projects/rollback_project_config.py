@@ -2,8 +2,6 @@ from deployer.database.identity_provider import IdentityProviderInterface
 from deployer.database.repositories.project import ProjectRepository
 from deployer.database.transaction import TransactionManagerInterface
 from deployer.domain.entities.project import ProjectConfig
-from deployer.domain.exceptions.project import ImpossibleProjectConfigVersion
-from deployer.domain.exceptions.user import AccessDenied
 
 
 class RollbackProjectConfigInteractor:
@@ -20,22 +18,9 @@ class RollbackProjectConfigInteractor:
     async def execute(self, project_id: int, version: int) -> ProjectConfig:
         user = await self._identity_provider.get_user()
         project = await self._project_repo.get_with_all_data(project_id)
-        if project.user_id != user.id:
-            raise AccessDenied
+        project.check_user_permitted(user.id)
 
-        if version < 1:
-            raise ImpossibleProjectConfigVersion
-
-        config = await self._project_repo.get_config_by_version(
-            project_id, version, project.deploy_strategy,
-        )
-        if not config or project.active_config.version == version:
-            raise ImpossibleProjectConfigVersion
-
-        await self._project_repo.delete_configs_after_version(
-            project_id, version, project.deploy_strategy,
-        )
-        config.set_active()
+        config = project.rollback_config(version)
 
         await self._transaction_manager.commit()
         return config

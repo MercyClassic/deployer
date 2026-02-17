@@ -11,9 +11,8 @@ class UserRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def create(self, user: User) -> User:
+    async def add(self, user: User) -> None:
         self._session.add(user)
-        return user
 
     async def get_by_telegram_id(self, telegram_id: int) -> User | None:
         return await self._session.scalar(

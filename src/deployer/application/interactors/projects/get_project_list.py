@@ -16,5 +16,4 @@ class GetProjectListInteractor:
 
     async def execute(self) -> Iterable[Project]:
         user = await self._identity_provider.get_user()
-        projects = await self._project_repo.get_by_user_id(user.id)
-        return projects
+        return await self._project_repo.get_by_user_id(user.id)

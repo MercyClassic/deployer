@@ -14,6 +14,6 @@ class CreateUserInteractor:
 
     async def execute(self, telegram_id: int, username: str | None) -> User:
         user = User.create(telegram_id=telegram_id, username=username)
-        user = await self._user_repo.create(user)
+        await self._user_repo.add(user)
         await self._transaction_manager.commit()
         return user

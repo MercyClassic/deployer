@@ -3,7 +3,6 @@ from deployer.database.repositories.deployment import DeploymentRepository
 from deployer.database.repositories.project import ProjectRepository
 from deployer.domain.entities.deployment import Deployment
 from deployer.domain.exceptions.project import ProjectNotFound
-from deployer.domain.exceptions.user import AccessDenied
 
 
 class GetDeployHistoryInteractor:
@@ -22,7 +21,6 @@ class GetDeployHistoryInteractor:
         project = await self._project_repo.get(project_id)
         if not project:
             raise ProjectNotFound
-        if project.user_id != user.id:
-            raise AccessDenied
+        project.check_user_permitted(user.id)
         deployments = await self._deployment_repo.get_history(project_id)
         return list(deployments)
