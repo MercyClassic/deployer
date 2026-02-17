@@ -85,6 +85,10 @@ The bot interface (just several examples):
 
 *View deployment history, run new deployments, check logs*
 
+![Deployment Logs](docs/images/deploy_log.png)
+
+*View deployment std*
+
 ### User Profile
 ![User profile](docs/images/profile.png)
 
