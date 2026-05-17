@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from deployer.domain.entities.deployment import Deployment
@@ -20,5 +20,10 @@ class DeploymentRepository:
         return await self._session.scalars(
             select(Deployment)
             .where(Deployment.project_id == project_id)
-            .order_by(Deployment.id.desc()),
+            .order_by(Deployment.id.desc())
+        )
+
+    async def update_std(self, deployment_id: int, std: str) -> None:
+        await self._session.execute(
+            update(Deployment).where(Deployment.id == deployment_id).values(std=std)
         )

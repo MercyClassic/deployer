@@ -1,3 +1,5 @@
+from html import escape
+
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button, Select
@@ -16,6 +18,14 @@ from deployer.application.interactors.deployment.get_deployment import (
 from deployer.domain.exceptions.deployment import DeployAlreadyRunning
 from deployer.domain.exceptions.project import ActiveConfigNotFound
 from deployer.presentators.tg.states.deployment import DeploymentStates
+
+STATUS_EMOJI_MAPPER = {
+    'success': '✅',
+    'failed': '❌',
+    'running': '⏳',
+    'pending': '🕐',
+    'default': '⏳',
+}
 
 
 async def on_dialog_start(start_data: dict, manager: DialogManager) -> None:
@@ -36,14 +46,9 @@ async def deployments_getter(
     if not deployments:
         return {'deployments': [], 'deployments_list': 'История деплоев пуста'}
 
-    status_emoji_mapper = {
-        'success': '✅',
-        'failed': '❌',
-        'default': '⏳',
-    }
     deployments_list = '\n'.join(
         [
-            f'{status_emoji_mapper.get(deploy.status, status_emoji_mapper['default'])} '
+            f'{STATUS_EMOJI_MAPPER.get(deploy.status, STATUS_EMOJI_MAPPER["default"])} '
             f'Деплой #{deploy.id} - {deploy.status} '
             f'({deploy.started_at.strftime("%d.%m.%Y %H:%M") if deploy.started_at else "N/A"})'
             for deploy in deployments
@@ -88,6 +93,15 @@ async def on_start_deploy(
     await manager.switch_to(DeploymentStates.deployment_list)
 
 
+async def on_refresh_logs(
+    callback: CallbackQuery,
+    button: Button,
+    manager: DialogManager,
+) -> None:
+    await manager.update({})
+    await callback.answer('Обновлено')
+
+
 @inject
 async def on_show_logs(
     dialog_manager: DialogManager,
@@ -109,9 +123,18 @@ async def on_show_logs(
         else 'N/A'
     )
 
+    raw_logs = deployment.std or 'Логи отсутствуют'
+    if len(raw_logs) > 3000:
+        raw_logs = '...\n' + raw_logs[-3000:]
+    logs = escape(raw_logs)
+
     return {
         'deployment': deployment,
-        'logs': deployment.std[:3000] if deployment.std else 'Логи отсутствуют',
+        'logs': logs,
         'started_at': started_at,
         'finished_at': finished_at,
+        'status_emoji': STATUS_EMOJI_MAPPER.get(
+            deployment.status, STATUS_EMOJI_MAPPER['default']
+        ),
+        'is_running': deployment.status in ('running', 'pending'),
     }

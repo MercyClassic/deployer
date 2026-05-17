@@ -20,4 +20,4 @@ class GitDeployer(DeployerStrategy):
                 if config.with_entrypoint:
                     cmd += ' && entrypoint.sh'
 
-                self._run_command(ssh_client, cmd)
+                await self._run_command(ssh_client, cmd)

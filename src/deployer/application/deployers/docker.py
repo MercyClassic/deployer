@@ -16,7 +16,7 @@ class DockerDeployer(DeployerStrategy):
                 password=server.ssh_secret,
                 port=server.port,
             ) as ssh_client:
-                self._run_command(
+                await self._run_command(
                     ssh_client,
                     f'docker pull {config.registry_url}/{config.image}',
                 )
@@ -37,4 +37,4 @@ class DockerDeployer(DeployerStrategy):
                     cmd += ''.join(f' -e {k}="{v}"' for k, v in config.env.items())
                 cmd += f' {config.registry_url}/{config.image}'
 
-                self._run_command(ssh_client, cmd)
+                await self._run_command(ssh_client, cmd)

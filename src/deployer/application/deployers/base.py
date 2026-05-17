@@ -58,10 +58,28 @@ class DeployerStrategy(ABC):
         self._ssh_client = ssh_client_cls
         self._transaction_manager = transaction_manager
         self._deployment_repo = deployment_repo
-        self.logs = []
+        self.logs: list[str] = []
+        self._deployment_id: int | None = None
 
-    def _run_command(self, ssh_client, command: str, timeout: int = 300) -> None:
+    async def _flush_logs(self) -> None:
+        if self._deployment_id is None:
+            return
+        try:
+            await self._deployment_repo.update_std(
+                self._deployment_id, '\n'.join(self.logs)
+            )
+            await self._transaction_manager.commit()
+        except Exception as e:
+            logger.warning('Failed to flush logs: %s', e)
+
+    async def _run_command(
+        self,
+        ssh_client,
+        command: str,
+        timeout: int = 300,
+    ) -> None:
         self.logs.append(f'$ {command}')
+        await self._flush_logs()
 
         stdin, stdout, stderr = ssh_client.exec_command(command, timeout=timeout)
         channel = stdout.channel
@@ -72,6 +90,8 @@ class DeployerStrategy(ABC):
             self.logs.append(out)
         if err:
             self.logs.append(err)
+
+        await self._flush_logs()
 
         exit_code = channel.recv_exit_status()
 
@@ -92,6 +112,7 @@ class DeployerStrategy(ABC):
         config: ProjectConfigType,
         servers: list[Server],
     ) -> None:
+        self._deployment_id = deployment_id
         deployment = await self._deployment_repo.get(deployment_id)
         deployment.set_running_status()
         await self._transaction_manager.commit()

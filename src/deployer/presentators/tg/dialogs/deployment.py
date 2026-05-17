@@ -14,6 +14,7 @@ from deployer.presentators.tg.handlers.deployment import (
     deployments_getter,
     on_deployment_select,
     on_dialog_start,
+    on_refresh_logs,
     on_show_logs,
     on_start_deploy,
 )
@@ -48,14 +49,23 @@ deployment_dialog = Dialog(
     Window(
         Format(
             'Логи деплоя #{deployment.id}\n'
-            'Статус: {deployment.status}\n'
+            'Статус: {status_emoji} {deployment.status}\n'
             'Начало: {started_at}\n'
             'Завершение: {finished_at}\n\n'
-            'Логи:\n{logs}',
+            'Логи:\n<pre>{logs}</pre>',
         ),
-        Back(Const('🔙 Назад')),
+        Row(
+            Button(
+                Const('🔄 Обновить'),
+                id='refresh_logs',
+                on_click=on_refresh_logs,
+                when='is_running',
+            ),
+            Back(Const('🔙 Назад')),
+        ),
         getter=on_show_logs,
         state=DeploymentStates.deployment_logs,
+        parse_mode='HTML',
     ),
     on_start=on_dialog_start,
 )

@@ -17,6 +17,6 @@ class ShellDeployer(DeployerStrategy):
                 port=server.port,
             ) as ssh_client:
                 for command in config.commands:
-                    self._run_command(
+                    await self._run_command(
                         ssh_client, f'cd {server.workdir} && {command}'
                     )
