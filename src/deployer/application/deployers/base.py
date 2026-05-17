@@ -7,7 +7,6 @@ from paramiko import SSHException
 
 from deployer.database.repositories.deployment import DeploymentRepository
 from deployer.database.transaction import TransactionManagerInterface
-from deployer.domain.entities.deployment import DeploymentStatus
 from deployer.domain.entities.project import Server
 from deployer.domain.entities.project_configs import ProjectConfigType
 from deployer.domain.exceptions.deployment import DeployFailed
@@ -94,16 +93,16 @@ class DeployerStrategy(ABC):
         servers: list[Server],
     ) -> None:
         deployment = await self._deployment_repo.get(deployment_id)
-        deployment.set_status(DeploymentStatus.running)
+        deployment.set_running_status()
         await self._transaction_manager.commit()
         try:
             await self._deploy(config, servers)
         except (DeployFailed, SSHException, socket.timeout) as exc:
             logger.error('Deploy #%s failed. Reason: %s', deployment.id, str(exc))
             self.logs.append(str(exc))
-            deployment.set_status(DeploymentStatus.failed)
+            deployment.set_failed_status()
         else:
-            deployment.set_status(DeploymentStatus.success)
+            deployment.set_success_status()
 
         deployment.set_finished_at()
         deployment.set_std('\n'.join(self.logs))

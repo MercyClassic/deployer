@@ -39,8 +39,14 @@ class Deployment:
     def set_std(self, std: str) -> None:
         self.std = std
 
-    def set_status(self, status: DeploymentStatus) -> None:
-        self.status = status
+    def set_running_status(self) -> None:
+        self.status = DeploymentStatus.running
+
+    def set_failed_status(self) -> None:
+        self.status = DeploymentStatus.failed
+
+    def set_success_status(self) -> None:
+        self.status = DeploymentStatus.success
 
     def set_finished_at(self) -> None:
         self.finished_at = datetime.datetime.now(datetime.UTC)
