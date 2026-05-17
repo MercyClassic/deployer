@@ -1,4 +1,5 @@
 import logging
+import socket
 from abc import ABC, abstractmethod
 
 import paramiko
@@ -60,13 +61,12 @@ class DeployerStrategy(ABC):
         self._deployment_repo = deployment_repo
         self.logs = []
 
-    def _run_command(self, ssh_client, command: str) -> None:
+    def _run_command(self, ssh_client, command: str, timeout: int = 300) -> None:
         self.logs.append(f'$ {command}')
 
-        stdin, stdout, stderr = ssh_client.exec_command(command)
+        stdin, stdout, stderr = ssh_client.exec_command(command, timeout=timeout)
         channel = stdout.channel
 
-        stdin, stdout, stderr = ssh_client.exec_command(command)
         out = stdout.read().decode()
         err = stderr.read().decode()
         if out:
@@ -98,7 +98,7 @@ class DeployerStrategy(ABC):
         await self._transaction_manager.commit()
         try:
             await self._deploy(config, servers)
-        except (DeployFailed, SSHException) as exc:
+        except (DeployFailed, SSHException, socket.timeout) as exc:
             logger.error('Deploy #%s failed. Reason: %s', deployment.id, str(exc))
             self.logs.append(str(exc))
             deployment.set_status(DeploymentStatus.failed)
