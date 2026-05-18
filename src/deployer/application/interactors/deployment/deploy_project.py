@@ -55,7 +55,6 @@ class DeployProjectInteractor:
             deployer_cls,
             deployment.id,
             project.active_config.config,
-            project.servers,
         )
 
         await self._transaction_manager.commit()

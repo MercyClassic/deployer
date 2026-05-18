@@ -2,7 +2,7 @@ from collections.abc import Iterable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from deployer.domain.entities.project import Project
 
@@ -20,12 +20,12 @@ class ProjectRepository:
     async def delete(self, project: Project) -> None:
         await self._session.delete(project)
 
-
     async def get_with_all_data(self, project_id: int) -> Project | None:
         return await self._session.scalar(
             select(Project)
             .where(Project.id == project_id)
             .options(
+                joinedload(Project.user),
                 joinedload(Project.configs),
                 joinedload(Project.servers),
                 joinedload(Project.deployments),

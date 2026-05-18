@@ -16,6 +16,9 @@ class DeploymentRepository:
     async def get(self, deployment_id: int) -> Deployment | None:
         return await self._session.get(Deployment, deployment_id)
 
+    async def refresh(self, deployment: Deployment) -> None:
+        await self._session.refresh(deployment)
+
     async def get_history(self, project_id: int) -> Iterable[Deployment]:
         return await self._session.scalars(
             select(Deployment)
