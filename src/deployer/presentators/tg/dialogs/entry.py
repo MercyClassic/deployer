@@ -1,21 +1,21 @@
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram_dialog import Dialog, DialogManager, ShowMode, StartMode, Window
-from aiogram_dialog.widgets.kbd import Cancel, Row, Start
+from aiogram_dialog.widgets.kbd import Button, Cancel, Row, Start
 from aiogram_dialog.widgets.text import Const
 
+from deployer.presentators.tg.handlers.entry import on_projects_click
 from deployer.presentators.tg.states.entry import EntryStates
-from deployer.presentators.tg.states.project import ProjectStates
 from deployer.presentators.tg.states.user import UserStates
 
 entry_dialog = Dialog(
     Window(
         Const('🤖 Добро пожаловать в Deployer Bot!\n\nВыберите раздел:'),
         Row(
-            Start(
+            Button(
                 Const('📁 Проекты'),
                 id='projects',
-                state=ProjectStates.project_list,
+                on_click=on_projects_click,
             ),
             Start(
                 Const('👤 Профиль'),
@@ -37,7 +37,9 @@ async def start_command(
     dialog_manager: DialogManager,
 ):
     await dialog_manager.start(
-        EntryStates.main_menu, show_mode=ShowMode.EDIT, mode=StartMode.RESET_STACK,
+        EntryStates.main_menu,
+        show_mode=ShowMode.EDIT,
+        mode=StartMode.RESET_STACK,
     )
 
 
