@@ -4,11 +4,7 @@ from deployer.domain.entities.project_configs import DockerConfig
 
 
 class DockerDeployer(DeployerStrategy):
-    async def _deploy(
-        self,
-        config: DockerConfig,
-        servers: list[Server],
-    ) -> None:
+    async def _deploy(self, config: DockerConfig, servers: list[Server]) -> None:
         for server in servers:
             with self._ssh_client(
                 host=server.host,
@@ -16,12 +12,19 @@ class DockerDeployer(DeployerStrategy):
                 password=server.ssh_secret,
                 port=server.port,
             ) as ssh_client:
+                container_name = config.image.replace(':', '_')
+
                 await self._run_command(
                     ssh_client,
                     f'docker pull {config.registry_url}/{config.image}',
                 )
 
-                cmd = f'docker run -d --name {config.image.replace(":", "_")}'
+                await self._run_command(
+                    ssh_client,
+                    f'docker stop {container_name} ; docker rm {container_name} ; true',
+                )
+
+                cmd = f'docker run -d --name {container_name}'
                 if config.volumes:
                     cmd += ''.join(
                         f' -v {host}:{container}'
