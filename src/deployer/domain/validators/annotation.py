@@ -1,16 +1,20 @@
 from collections.abc import Iterable, Mapping
+from types import UnionType
 from typing import Any, Union, get_args, get_origin, get_type_hints
 
 
 class AnnotationValidator(type):
     @classmethod
     def check_type(cls, value: Any, expected_type: type) -> bool:
+        if expected_type is Any:
+            return True
+
         origin = get_origin(expected_type)
 
         if origin is None:
             return isinstance(value, expected_type)
 
-        if origin is Union:
+        if origin in (Union, UnionType):
             return any(cls.check_type(value, t) for t in get_args(expected_type))
 
         if not isinstance(value, origin):
@@ -26,6 +30,11 @@ class AnnotationValidator(type):
                 cls.check_type(k, key_type) and cls.check_type(v, val_type)
                 for k, v in value.items()
             )
+
+        if issubclass(origin, tuple):
+            if len(args) != len(value):
+                return False
+            return all(cls.check_type(v, t) for v, t in zip(value, args))
 
         if issubclass(origin, Iterable) and not issubclass(origin, (str, bytes)):
             (item_type,) = args
