@@ -1,5 +1,6 @@
 from html import escape
 
+from aiogram import types
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button, Select
@@ -16,7 +17,8 @@ from deployer.application.interactors.deployment.get_deployment import (
     GetDeploymentInteractor,
 )
 from deployer.domain.exceptions.deployment import DeployAlreadyRunning
-from deployer.domain.exceptions.project import ActiveConfigNotFound
+from deployer.domain.exceptions.project import ActiveConfigNotFound, ProjectNotFound
+from deployer.domain.exceptions.user import AccessDenied
 from deployer.presentators.tg.states.deployment import DeploymentStates
 
 STATUS_EMOJI_MAPPER = {
@@ -138,3 +140,40 @@ async def on_show_logs(
         ),
         'is_running': deployment.status in ('running', 'pending'),
     }
+
+
+async def on_start_deploy_from_command(
+    message: types.Message,
+    deploy_project_interactor: DeployProjectInteractor,
+) -> None:
+    args = message.text.split()
+
+    if len(args) < 2:
+        await message.answer(
+            '❌ Укажите ID проекта\n' 'Формат: /deploy &lt;project_id&gt;',
+            parse_mode='HTML',
+        )
+        return
+
+    try:
+        project_id = int(args[1])
+    except ValueError:
+        await message.answer('❌ ID проекта должен быть числом')
+        return
+
+    try:
+        deployment = await deploy_project_interactor.execute(project_id)
+    except ProjectNotFound:
+        await message.answer('❌ Проект не найден')
+        return
+    except AccessDenied:
+        await message.answer('❌ У вас нет доступа к этому проекту')
+        return
+    except ActiveConfigNotFound:
+        await message.answer('❌ Не найдена конфигурация проекта')
+        return
+    except DeployAlreadyRunning:
+        await message.answer('❌ Деплой уже запущен')
+        return
+
+    await message.answer(f'🚀 Деплой #{deployment.id} запущен')
