@@ -1,6 +1,6 @@
 from collections.abc import Iterable, Mapping
 from types import UnionType
-from typing import Any, Union, get_args, get_origin, get_type_hints
+from typing import Any, Self, Union, get_args, get_origin, get_type_hints
 
 
 class AnnotationValidator(type):
@@ -42,7 +42,7 @@ class AnnotationValidator(type):
 
         return True
 
-    def __call__(cls, **kwargs) -> None:
+    def __call__(cls, **kwargs) -> Self:
         annotations = get_type_hints(cls)
         values = {}
 
